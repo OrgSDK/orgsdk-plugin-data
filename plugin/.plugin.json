@@ -1,0 +1,23 @@
+{
+	"$schema": "https://orgsdk.ai/schemas/plugin-manifest.v1.json",
+	"name": "data",
+	"version": "1.0.2",
+	"description": "Data utilities: HTTP fetching, array processing, transformation, currency conversion, and PDF extraction",
+	"entry": "index.ts",
+	"marketplace": {
+		"displayName": "Data Tools",
+		"category": "Data & AI",
+		"tagline": "Data utilities for agents — HTTP fetching, array processing, transformation, currency conversion, and PDF extraction.",
+		"tags": ["data", "utilities"],
+		"useCases": [
+			"Fetch and transform JSON from external APIs",
+			"Convert and reconcile currency amounts",
+			"Parse PDFs and extract their text and metadata",
+			"Chunk, deduplicate, and reshape datasets"
+		],
+		"permissionsSummary": "Local data and file utilities plus outbound HTTP fetch. No stored credentials and no destructive external actions.",
+		"links": {
+			"sourceRepo": "https://github.com/OrgSDK/orgsdk-plugin-data"
+		}
+	}
+}
