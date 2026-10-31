@@ -1,3 +1,13 @@
+# Current execution contract
+
+`fetchData` supports deliberate HTTP/HTTPS access, including private/loopback destinations. Run it only with the network authority appropriate to the project; the plugin is not an egress filter. Responses are limited to 2 MB with a 15-second I/O deadline; HTTP errors fail. PDF input is limited to 10 MB, output to 2 MB and 100 pages. `convertCurrency` uses frozen demonstration rates, not live financial data.
+
+Native OAuth providers receive only `{source: "byo", secret_accessToken}`. The host owns refresh. The first-party relay is retired.
+
+## Historical source reference
+
+The following describes the former author-source host; current npm and native credential behaviour above takes precedence.
+
 # Data Tools
 
 Data utilities: HTTP fetching, array processing, transformation, currency

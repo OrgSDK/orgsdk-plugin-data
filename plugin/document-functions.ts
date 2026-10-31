@@ -1,5 +1,5 @@
 import type { SafeFunction } from "@orgsdk/plugins";
-import { extractText, getMeta } from "unpdf";
+import { extractText, getDocumentProxy, getMeta } from "unpdf";
 
 export const moduleDescription =
 	"Extract text and metadata from documents (PDF)";
@@ -20,39 +20,59 @@ export const safeFunctions: SafeFunction[] = [
 				throw new Error("parsePdf: base64Data is required");
 			}
 
+			if (
+				base64Data.length > 14_000_000 ||
+				!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)
+			)
+				throw new Error("INVALID_PDF_INPUT");
 			const buffer = Buffer.from(base64Data, "base64");
+			if (
+				buffer.length > 10_000_000 ||
+				buffer.subarray(0, 5).toString() !== "%PDF-"
+			)
+				throw new Error("INVALID_PDF_INPUT");
 			const data = new Uint8Array(buffer);
 
-			const { text, totalPages } = await extractText(data, {
-				mergePages: true,
-			});
-
-			let metadata: Record<string, string> | undefined;
+			const document = await getDocumentProxy(data);
 			try {
-				const meta = await getMeta(data);
-				const info = meta.info ?? {};
-				const picked: Record<string, string> = {};
-				for (const key of [
-					"Title",
-					"Author",
-					"Subject",
-					"Creator",
-					"Producer",
-				]) {
-					if (typeof info[key] === "string" && info[key]) {
-						picked[key.toLowerCase()] = info[key];
-					}
-				}
-				if (Object.keys(picked).length > 0) metadata = picked;
-			} catch {
-				// metadata extraction is best-effort
-			}
+				if (document.numPages > 100) throw new Error("PDF_LIMIT_EXCEEDED");
+				const { text, totalPages } = await extractText(document, {
+					mergePages: true,
+				});
 
-			return {
-				text: text as string,
-				totalPages,
-				...(metadata ? { metadata } : {}),
-			};
+				if (totalPages > 100 || text.length > 2_000_000)
+					throw new Error("PDF_LIMIT_EXCEEDED");
+
+				let metadata: Record<string, string> | undefined;
+				try {
+					const meta = await getMeta(document);
+					const info = meta.info ?? {};
+					const picked: Record<string, string> = {};
+					for (const key of [
+						"Title",
+						"Author",
+						"Subject",
+						"Creator",
+						"Producer",
+					]) {
+						if (typeof info[key] === "string" && info[key]) {
+							picked[key.toLowerCase()] = info[key];
+						}
+					}
+					if (Object.keys(picked).length > 0) metadata = picked;
+				} catch {
+					// metadata extraction is best-effort
+				}
+
+				return {
+					text: text as string,
+					totalPages,
+					...(metadata ? { metadata } : {}),
+				};
+			} finally {
+				// The serverless PDF backend used by Bun can omit the optional destroy hook.
+				if (typeof document.destroy === "function") await document.destroy();
+			}
 		},
 		description:
 			"Extract text content and metadata from a PDF. Accepts standard base64 string (e.g. from getMessageAttachment().dataBase64). Returns full text, page count, and optional metadata.",
