@@ -1,4 +1,5 @@
 import type { SafeFunction } from "@orgsdk/plugins";
+import { fetchJson } from "./http-client";
 
 export const moduleDescription = "Fetch JSON data from HTTP/HTTPS URLs";
 
@@ -9,8 +10,7 @@ export const safeFunctions: SafeFunction[] = [
 			if (!url.startsWith("https://") && !url.startsWith("http://")) {
 				throw new Error("Only HTTP/HTTPS URLs are allowed");
 			}
-			const response = await fetch(url);
-			return await response.json();
+			return fetchJson(url);
 		},
 		description: "Fetch JSON data from a URL",
 		returnType: "Promise<any>",
